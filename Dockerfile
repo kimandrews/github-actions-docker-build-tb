@@ -4,7 +4,7 @@ FROM nextstrain/base
 WORKDIR /download/sratoolkit
 RUN curl https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/current/sratoolkit.current-ubuntu64.tar.gz \
   | tar xzvpf - --no-same-owner --strip-components=1 \
- && cp -p bin/* /user/local/bin
+ && cp -p bin/* /usr/local/bin
 
 # snippy
 RUN apt-get update && apt-get install -y --no-install-recommends snippy
