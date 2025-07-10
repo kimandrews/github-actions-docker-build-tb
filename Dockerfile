@@ -7,7 +7,9 @@ RUN curl https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/current/sratoolkit.current-u
  && cp -pr bin/* /usr/local/bin
 
 # snippy
-RUN apt-get update && apt-get install -y --no-install-recommends snippy
+WORKDIR /snippy
+RUN apt-get update && apt-get install -y --no-install-recommends perl && \
+ git clone https://github.com/tseemann/snippy.git
 
 # tbprofiler
 RUN pip3 install git+https://github.com/jodyphelan/TBProfiler.git
