@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends perl && \
 # tbprofiler
 RUN pip3 install git+https://github.com/jodyphelan/TBProfiler.git
 RUN pip3 install git+https://github.com/jodyphelan/pathogen-profiler.git
-RUN pip3 install pysam
+RUN pip3 install pysam pydantic
 RUN tb-profiler update_tbdb
 
 # tbprofiler dependencies that are not already in snippy
