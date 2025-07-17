@@ -8,15 +8,27 @@ RUN curl https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/current/sratoolkit.current-u
 
 # snippy
 WORKDIR /snippy
-RUN apt-get update && apt-get install -y --no-install-recommends perl && \
- git clone https://github.com/tseemann/snippy.git
+RUN apt-get update && apt-get install -y --no-install-recommends perl \
+ && git clone https://github.com/tseemann/snippy.git
+
 
 # tbprofiler
 RUN pip3 install git+https://github.com/jodyphelan/TBProfiler.git
 RUN pip3 install git+https://github.com/jodyphelan/pathogen-profiler.git
-RUN pip3 install pysam pydantic
-RUN tb-profiler update_tbdb
+
+# tbprofiler dependencies that are also snippy dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends bwa \
+minimap2 \
+samtools \
+bcftools \
+freebayes \
+parallel \
+samclip \
+snpeff
 
 # tbprofiler dependencies that are not already in snippy
-RUN apt-get update && apt-get install -y --no-install-recommends python3-tqdm
-RUN apt-get update && apt-get install -y --no-install-recommends trimmomatic
+RUN apt-get update && apt-get install -y --no-install-recommends python3-tqdm trimmomatic
+RUN pip install git+https://github.com/jodyphelan/itol-config.git
+RUN pip3 install pysam pydantic rich_argparse tomli docxtpl filelock
+
+RUN tb-profiler update_tbdb
