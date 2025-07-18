@@ -53,4 +53,3 @@ RUN mkdir -p /usr/local/share/tbprofiler/snpeff && \
 
 # Uncomment this if you need a persistent entrypoint so you can shell into the container
 # CMD tail -f /dev/null
-
