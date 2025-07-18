@@ -1,34 +1,56 @@
-FROM nextstrain/base
+FROM nextstrain/base:latest
 
-# sra-toolkit: https://github.com/ncbi/sra-tools/wiki/02.-Installing-SRA-Toolkit
-WORKDIR /download/sratoolkit
-RUN curl https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/current/sratoolkit.current-ubuntu64.tar.gz \
-  | tar xzvpf - --no-same-owner --strip-components=1 \
- && cp -pr bin/* /usr/local/bin
+RUN apt-get update
 
-# snippy
-WORKDIR /snippy
-RUN apt-get update && apt-get install -y --no-install-recommends perl \
- && git clone https://github.com/tseemann/snippy.git
+# Install binary deps that are packaged by Debian
+RUN apt-get install --assume-yes --no-install-recommends \
+    bcftools \
+    bwa \
+    freebayes \
+    libbio-perl-perl \
+    minimap2 \
+    openjdk-17-jre-headless \
+    parallel \
+    samclip \
+    samtools \
+    snpeff \
+    sra-toolkit \
+    trimmomatic
 
+# Update `pip` and install Python dependencies
+RUN pip install --upgrade pip
+RUN pip install \
+    docxtpl \
+    filelock \
+    pydantic \
+    pysam \
+    rich_argparse \
+    tomli \
+    tqdm
 
-# tbprofiler
-RUN pip3 install git+https://github.com/jodyphelan/TBProfiler.git
-RUN pip3 install git+https://github.com/jodyphelan/pathogen-profiler.git
+# Check out packages we want to build from source
+RUN git clone https://github.com/jodyphelan/itol-config           /opt/itol-config
+RUN git clone https://github.com/jodyphelan/pathogen-profiler.git /opt/pathogen-profiler
+RUN git clone https://github.com/jodyphelan/TBProfiler.git        /opt/TBProfiler
+RUN git clone https://github.com/tseemann/snippy.git              /opt/snippy
 
-# tbprofiler dependencies that are also snippy dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends bwa \
-minimap2 \
-samtools \
-bcftools \
-freebayes \
-parallel \
-samclip \
-snpeff
+# apply monkey patch to pathogen-profiler
+COPY pathogen-profiler.patch /tmp/pathogen-profiler.patch
+RUN pushd /opt/pathogen-profiler && \
+    git apply /tmp/pathogen-profiler.patch && \
+    rm /tmp/pathogen-profiler.patch && \
+    popd
 
-# tbprofiler dependencies that are not already in snippy
-RUN apt-get update && apt-get install -y --no-install-recommends python3-tqdm trimmomatic
-RUN pip install git+https://github.com/jodyphelan/itol-config.git
-RUN pip3 install pysam pydantic rich_argparse tomli docxtpl filelock
+# Build/install those things
+RUN pushd /opt/itol-config       && pip install . && popd
+RUN pushd /opt/pathogen-profiler && pip install . && popd
+RUN pushd /opt/TBProfiler        && pip install . && popd
 
-RUN tb-profiler update_tbdb
+# Set up tb-profiler run area and the one file it won't bootstrap
+RUN mkdir -p /usr/local/share/tbprofiler/snpeff && \
+    touch /usr/local/share/tbprofiler/snpeff/snpEff.config && \
+    chmod -R 777 /usr/local/share/tbprofiler
+
+# Uncomment this if you need a persistent entrypoint so you can shell into the container
+# CMD tail -f /dev/null
+
